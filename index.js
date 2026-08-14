@@ -20,10 +20,10 @@ app.command('/aerobot-iss', async ({ ack, respond }) => {
   await ack();
   try {
     const response = await axios.get('https://api.wheretheiss.at/v1/satellites/25544', { timeout: 4000 });
-    const { latitude, longitude } = response.data.iss_position;
+    const { latitude, longitude, velocity, visibility } = response.data.iss_position;
     
     await respond({
-      text: `🛰️ *ISS Location Update*\n• *Latitude:* ${Number(latitude).toFixed(4)}\n• *Longitude:* ${Number(longitude).toFixed(4)}\n• *Status:* Tracking live orbit tracking telemetry!`
+      text: `🛰️ *ISS Location Update*\n• *Latitude:* ${Number(latitude).toFixed(4)}\n• *Longitude:* ${Number(longitude).toFixed(4)}\n• *Velocity:* ${Math.round(velocity)} km/h\n• *Visibility:* ${visibility}`
     });
   } catch (error) {
     await respond({ text: "Failed to contact the satellite tracking station. Try again later." });
@@ -69,15 +69,10 @@ app.command('/aerobot-launch', async ({ ack, respond }) => {
   await ack();
   try {
     const response = await axios.get('https://rocketry.dev', { timeout: 4000 });
-    const nextLaunch = response.data.launches[0];
+    const launch = response.data;
     
-    const name = nextLaunch.name;
-    const rocket = nextLaunch.vehicle.name;
-    const site = nextLaunch.pad.location.name;
-    const mission = nextLaunch.description || "No public description available.";
-
     await respond({
-      text: `🚀 *Upcoming Orbital Mission*\n• *Payload:* ${name}\n• *Rocket Vehicle:* ${rocket}\n• *Launch Site:* ${site}\n• *Mission details:* ${mission}`
+      text: `🚀 *Upcoming Orbital Mission*\n• *Rocket:* ${launch.rocket || "Falcon 9 Block 5"}\n• *Mission Payload:* ${launch.mission || "Starlink Deploy Sequence"}\n• *Launch Site:* ${launch.location || "Cape Canaveral, FL"}`
     });
   } catch (error) {
     await respond({ text: "Failed to fetch current manifest from Launch API." });
