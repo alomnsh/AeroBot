@@ -20,7 +20,7 @@ app.command('/aerobot-iss', async ({ ack, respond }) => {
   await ack();
   try {
     const response = await axios.get('https://api.wheretheiss.at/v1/satellites/25544', { timeout: 4000 });
-    const { latitude, longitude, velocity, visibility } = response.data.iss_position;
+    const { latitude, longitude, velocity, visibility } = response.data;
     
     await respond({
       text: `🛰️ *ISS Location Update*\n• *Latitude:* ${Number(latitude).toFixed(4)}\n• *Longitude:* ${Number(longitude).toFixed(4)}\n• *Velocity:* ${Math.round(velocity)} km/h\n• *Visibility:* ${visibility}`
@@ -65,18 +65,36 @@ app.command('/aerobot-resistor', async ({ command, ack, respond }) => {
   });
 });
 
-app.command('/aerobot-launch', async ({ ack, respond }) => {
+app.command('/aerobot-weight', async ({ command, ack, respond }) => {
   await ack();
-  try {
-    const response = await axios.get('https://rocketry.dev', { timeout: 4000 });
-    const launch = response.data;
-    
-    await respond({
-      text: `🚀 *Upcoming Orbital Mission*\n• *Rocket:* ${launch.rocket || "Falcon 9 Block 5"}\n• *Mission Payload:* ${launch.mission || "Starlink Deploy Sequence"}\n• *Launch Site:* ${launch.location || "Cape Canaveral, FL"}`
-    });
-  } catch (error) {
-    await respond({ text: "Failed to fetch current manifest from Launch API." });
+  
+  const earthWeight = parseFloat(command.text.trim());
+  if (isNaN(earthWeight) || earthWeight <= 0) {
+    await respond({ text: "Please provide a valid Earth weight! Example: \`/aerobot-weight 170\`" });
+    return;
   }
+
+  const moonWeight = (earthWeight * 0.166).toFixed(1);
+  const marsWeight = (earthWeight * 0.377).toFixed(1);
+  const jupiterWeight = (earthWeight * 2.36).toFixed(1);
+
+  await respond({
+    text: `🪐 *Planetary Weight for ${earthWeight} lbs/kg*\n• *The Moon:* ${moonWeight} (Featherweight!)\n• *Mars:* ${marsWeight} (Lighter stance)\n• *Jupiter:* ${jupiterWeight} (Intense gravity!)`
+  });
+});
+
+app.command('/aerobot-help', async ({ ack, respond }) => {
+  await ack();
+  
+  const helpText = ` *AeroBot Commands*\n` +
+    `Here is a list of all available commands you can run:\n\n` +
+    `• \`/aerobot-ping\` - Checks if the bot is alive and responding.\n` +
+    `• \`/aerobot-iss\` - Tells the current coordinates of the ISS, its velocity and visibility.\n` +
+    `• \`/aerobot-resistor\` - Calculates the resistance of a resistor from its color bands.\n` +
+    `• \`/aerobot-weight [value]\` - Calculates your exact weight on other planets.\n` +
+    `• \`/aerobot-help\` - Displays this helpful command directory screen.`;
+
+  await respond({ text: helpText });
 });
 
 (async () => {
